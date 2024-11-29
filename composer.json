@@ -1,0 +1,15 @@
+{
+  "name": "vendor_name/pagopa-qi-jira-snow",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "simoneesposito",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    
+  }
+}
