@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-apache
 
 # update repo e installazione dipendenze php
 RUN apt update -y && \
@@ -13,4 +13,5 @@ RUN cd /tmp && \
     curl -k https://getcomposer.org/installer -o composer-setup.php && \
     php composer-setup.php && \
     mv composer.phar /usr/local/bin/composer && \
-    rm -f composer-setup.php
+    rm -f composer-setup.php && \
+    a2enmod rewrite
