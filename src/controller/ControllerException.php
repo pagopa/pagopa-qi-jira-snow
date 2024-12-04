@@ -2,7 +2,7 @@
 
 namespace pagopa\jirasnow\controller;
 
-class CreateException
+class ControllerException extends \Exception
 {
 
 }

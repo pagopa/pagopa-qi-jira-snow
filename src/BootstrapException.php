@@ -2,7 +2,7 @@
 
 namespace pagopa\jirasnow;
 
-class BootstrapException
+class BootstrapException extends \Exception
 {
 
 }
