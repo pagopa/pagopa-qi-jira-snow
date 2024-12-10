@@ -27,6 +27,12 @@ class HTTPResponse
     protected array $headers = array();
 
 
+
+    protected int $errno;
+
+    protected string $errmsg;
+
+
     /**
      * Riceve in ingresso una CurlHandle resource non ancora avviata
      * La avvia e salva la risposta (header & body)
@@ -50,8 +56,18 @@ class HTTPResponse
         );
         $this->response = curl_exec($this->request);
         $this->headers = $headers;
+
+        $this->errno = curl_errno($this->request);
+        $this->errmsg = curl_error($this->request);
+
+        curl_close($this->request);
     }
 
+
+    public function getError() : array
+    {
+        return ['errno' => $this->errno, 'errmsg' => $this->errmsg];
+    }
 
     /**
      * Restituisce il payload della response
@@ -68,7 +84,7 @@ class HTTPResponse
      */
     public function getCode() : int
     {
-        return curl_getinfo($this->request, CURLINFO_HTTP_CODE);
+        return curl_getinfo($this->request, CURLINFO_RESPONSE_CODE);
     }
 
     /**
