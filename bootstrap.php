@@ -71,7 +71,8 @@ $env_var = [
     'CERTIFICATE_FORMAT',
     'JIRA_ID_TYPE_INCIDENT',
     'JIRA_ID_TYPE_REQUEST',
-    'SERVICE_NOW_ACCOUNT_CN'
+    'SERVICE_NOW_ACCOUNT_CN',
+    'VERIFY_CHAIN'
 ];
 
 foreach($env_var as $var)

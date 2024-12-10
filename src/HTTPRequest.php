@@ -107,6 +107,13 @@ class HTTPRequest
     protected array $postFields = array();
 
 
+    /**
+     * Attiva o disattiva la verifica della catena di certificazione
+     * @var bool
+     */
+    protected bool $verifyPeer = false;
+
+
     public function __construct(string $url, string $method = 'GET', array $headers = [], string $payload = '')
     {
         $this->setUrl($url);
@@ -126,6 +133,8 @@ class HTTPRequest
         $this->use_mTLS = (empty(Config::get('USE_MTLS'))) ? false : filter_var(Config::get('USE_MTLS'), FILTER_VALIDATE_BOOLEAN);
         $this->certificate_key = (empty(Config::get('CERTIFICATE_KEY'))) ? "" : Config::get('CERTIFICATE_KEY');
         $this->certificate_public = (empty(Config::get('CERTIFICATE_PUBLIC'))) ? "" : Config::get('CERTIFICATE_PUBLIC');
+
+        $this->verifyPeer = (empty(Config::get('VERIFY_CHAIN'))) ? false : Config::get('VERIFY_CHAIN');
     }
 
     /**
@@ -254,6 +263,7 @@ class HTTPRequest
         $this->httpClient = curl_init($url);
         curl_setopt($this->httpClient, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->httpClient, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($this->httpClient, CURLOPT_SSL_VERIFYPEER, $this->verifyPeer);
 //        curl_setopt($this->httpClient, CURLOPT_HEADER, true);
         if ($this->method == 'POST')
         {
