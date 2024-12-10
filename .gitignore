@@ -41,4 +41,6 @@ test.php
 build.sh
 rebuild.sh
 recreate.sh
+*.crt
+*.key
 

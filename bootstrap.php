@@ -21,7 +21,13 @@ set_exception_handler(function (Throwable $exception)
     header('Content-Type: application/json');
     $response = array(
         'code' => 500,
-        'message' => $exception->getMessage()
+        'message' => $exception->getMessage(),
+        'exception' => [
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'code' => $exception->getCode()
+        ],
+        'data' => $exception->getTrace()
     );
     echo json_encode($response);
 
@@ -61,7 +67,8 @@ $env_var = [
     'FORWARDER_URL',
     'USE_MTLS',
     'CERTIFICATE_KEY',
-    'CERTIFICATE_VALUE',
+    'CERTIFICATE_PUBLIC',
+    'CERTIFICATE_FORMAT',
     'JIRA_ID_TYPE_INCIDENT',
     'JIRA_ID_TYPE_REQUEST',
     'SERVICE_NOW_ACCOUNT_CN'
@@ -69,6 +76,9 @@ $env_var = [
 
 foreach($env_var as $var)
 {
-    putenv("{$var}={$_SERVER[$var]}");
-    $_ENV[$var] = trim($_SERVER[$var],"\x22\x27\ \n\r\t\v\0");
+    if (array_key_exists($var, $_SERVER))
+    {
+        putenv("{$var}={$_SERVER[$var]}");
+        $_ENV[$var] = trim($_SERVER[$var],"\x22\x27\ \n\r\t\v\0");
+    }
 }
