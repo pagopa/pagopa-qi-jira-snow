@@ -109,9 +109,19 @@ class ServiceNowAPI
         $this->client->getRequest()->setPostField('client_secret', $this->clientSecret);
 
         $this->client->exec();
-        $response = json_decode($this->client->getResponse()->getResponseBody());
-        $this->oauthToken = $response->access_token;
 
+        $code = $this->client->getResponse()->getCode();
+        if ($code == 200)
+        {
+            $response = json_decode($this->client->getResponse()->getResponseBody());
+            $this->oauthToken = $response->access_token;
+        }
+        else
+        {
+            $response = json_decode($this->client->getResponse()->getResponseBody());
+            $msg = sprintf('error code:%s, msg: %s', $response->errcode, $response->errmsg);
+            throw new ServiceNowApiException($msg);
+        }
     }
 
     /**
