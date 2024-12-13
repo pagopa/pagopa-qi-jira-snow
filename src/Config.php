@@ -2,6 +2,9 @@
 
 namespace pagopa\jirasnow;
 
+/**
+ * Classe che gestisce l'accesso alle variabili d'ambiente e ne effettua il trim.
+ */
 class Config
 {
 

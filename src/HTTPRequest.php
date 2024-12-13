@@ -4,6 +4,12 @@ namespace pagopa\jirasnow;
 
 use CurlHandle;
 
+/**
+ * Classe che si occupa di preparare una resource CurlHandle per effettuare
+ * chiamate HTTP(s) verso un determinato URL
+ * Può gestire header di richiesta e mutua autenticazione, oltre a poter lavorare
+ * con un forwarder pagoPA
+ */
 class HTTPRequest
 {
 
@@ -294,7 +300,16 @@ class HTTPRequest
 
         if ($this->method == 'POST')
         {
-            curl_setopt($this->httpClient, CURLOPT_POSTFIELDS, http_build_query($this->postFields));
+            $postData = $this->postFields;
+            if ($this->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+            {
+                $postData = http_build_query($this->postFields);
+            }
+            if ($this->getHeader('Content-Type') == 'application/json')
+            {
+                $postData = json_encode($postData);
+            }
+            curl_setopt($this->httpClient, CURLOPT_POSTFIELDS, $postData);
         }
 
     }
@@ -326,11 +341,12 @@ class HTTPRequest
      * Configura un campo ed il suo valore per le chiamate post
      * @param string $name
      * @param string $value
-     * @return void
+     * @return self
      */
-    public function setPostField(string $name, string $value) : void
+    public function setPostField(string $name, string $value) : self
     {
         $this->postFields[$name] = $value;
+        return $this;
     }
 
 

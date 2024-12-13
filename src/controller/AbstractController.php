@@ -4,6 +4,12 @@ namespace pagopa\jirasnow\controller;
 
 use pagopa\jirasnow\Bootstrap;
 
+/**
+ * La AbstractController è una classe da estendere che offre funzionalità minime per la gestione delle chiamate
+ * Effettua dei check sul contenuto della chiamata JSON offrendo quindi la possibilità di configurare, all'interno di un controller,
+ * quali sono i campi obbligatori di una richiesta
+ * Gestisce anche l'output da inviare al client per le risposte alle chiamate API
+ */
 abstract class AbstractController
 {
 
