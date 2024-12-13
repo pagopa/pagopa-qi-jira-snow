@@ -1,12 +1,12 @@
 <?php
 
+namespace pagopa\jirasnow;
+
 /**
  * La classe Bootstrap si occupa di gestire una request e fornire una response richiamando il controller corretto
  * in base al context della URL
  * La classe gestisce header e payload, ed è iniettata nella classe Controller
  */
-namespace pagopa\jirasnow;
-
 class Bootstrap
 {
 

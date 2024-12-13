@@ -2,14 +2,19 @@
 
 namespace pagopa\jirasnow;
 
-use DateTime;
-use Exception;
+use \DateTime;
+use \Exception;
 use JiraRestApi\Issue\Attachment;
 use JiraRestApi\Issue\Issue;
 use JiraRestApi\Issue\IssueField;
 use JiraRestApi\Issue\IssueService;
 use JiraRestApi\JiraException;
 
+
+/**
+ * Classe che si occupa di integrarsi con Jira Service Management
+ * Offre la possibilità di leggere tutte le proprietà di un ticket, oltre a poterle modificare
+ */
 class JiraTicket
 {
 
@@ -203,10 +208,102 @@ class JiraTicket
     }
 
 
+    /**
+     * Restituisce il titolo di un ticket Jira
+     * @return string
+     */
     public function getTitle() : string
     {
-
+        return $this->issueService->fields->summary;
     }
 
+    /**
+     * Restituisce la priority di un ticket
+     * Critico => 1 (id 10000 Jira , Critical)
+     * Alto => 2 (id 1 Jira, High)
+     * Medio => 3 (id 2 Jira, Medium)
+     * Basso => 4 (id 3 Jira, Low)
+     * Basso => 4 (id 10001 Jira, Icebox)
+     * @return mixed
+     */
+    public function getPriority() : mixed
+    {
+        $id =  $this->issueService->fields->priority->id;
+        if ($id == 10001)
+        {
+            // icebox
+            return 4;
+        }
+        if ($id == 10000)
+        {
+            // critical
+            return 1;
+        }
+        return $id;
+    }
+
+    /**
+     * Restituisce la description di un ticket Jira
+     * @return string
+     */
+    public function getDescription() : string
+    {
+        return $this->issueService->fields->description;
+    }
+
+
+    /**
+     * Restituisce il tipo di richiesta jira
+     * @return string
+     */
+    public function getRequestType() : string
+    {
+        $id = $this->issueService->fields->issuetype->id;
+        if ($id == Config::get('JIRA_ID_TYPE_INCIDENT'))
+        {
+            return 'incident';
+        }
+        if ($id == Config::get('JIRA_ID_TYPE_REQUEST'))
+        {
+            return 'information';
+        }
+        return $id;
+    }
+
+    /**
+     * Restituisce il business Service della Richiesta Jira
+     * @return mixed
+     */
+    public function getBusinessService() : mixed
+    {
+        $var = "";
+        if ($this->getRequestType() == 'incident')
+        {
+            $var = Config::get('JIRA_ID_FIELD_BUSINESS_AREA_INCIDENT');
+        }
+        if ($this->getRequestType() == 'information')
+        {
+            $var = Config::get('JIRA_ID_FIELD_BUSINESS_AREA_REQUEST');
+        }
+        return $this->issueService->fields->customFields[$var]->value;
+    }
+
+    /**
+     * Restituisce la request area della Richiesta Jira
+     * @return mixed
+     */
+    public function getRequestArea() : mixed
+    {
+        $var = "";
+        if ($this->getRequestType() == 'incident')
+        {
+            $var = Config::get('JIRA_ID_FIELD_BUSINESS_AREA_INCIDENT');
+        }
+        if ($this->getRequestType() == 'information')
+        {
+            $var = Config::get('JIRA_ID_FIELD_BUSINESS_AREA_REQUEST');
+        }
+        return $this->issueService->fields->customFields[$var]->child->value;
+    }
 
 }

@@ -3,6 +3,10 @@
 namespace pagopa\jirasnow;
 use CurlHandle;
 
+/**
+ * Classe che si occupa di eseguire una richiesta HTTP preparata dalla classe pagopa\jirasnow\HTTPRequest
+ * Fornisce l'accesso ad header e payload di risposta
+ */
 class HTTPResponse
 {
 
@@ -27,9 +31,16 @@ class HTTPResponse
     protected array $headers = array();
 
 
-
+    /**
+     * Contiene l'error number fornito dalla curl_errno() di PHP
+     * @var int
+     */
     protected int $errno;
 
+    /**
+     * Contiene l'error message fornito dalla curl_error() di PHP
+     * @var string
+     */
     protected string $errmsg;
 
 
@@ -64,9 +75,9 @@ class HTTPResponse
     }
 
 
-    public function getError() : array
+    public function getError() : string
     {
-        return ['errno' => $this->errno, 'errmsg' => $this->errmsg];
+        return $this->errmsg;
     }
 
     /**
