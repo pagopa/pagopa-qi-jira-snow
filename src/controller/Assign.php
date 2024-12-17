@@ -7,41 +7,27 @@ use pagopa\jirasnow\snow\ServiceNowAPI;
 use pagopa\jirasnow\snow\ServiceNowApiException;
 
 /**
- * Controller che si occupa di gestire le chiamate nel contesto /create
+ * Controller che si occupa di gestire le chiamate nel contesto /assign
  * Parametri di input per le chiamate API<br>
- * Dati impliciti
+ * Dati input
  * <code>
  *     {
- *          "action" : "create" ,
- *          "jira_ticket" : <jira_ticket_id>
+ *          "ticket_id": <jira_ticket>,
  *     }
  * </code>
  *
- * Dati espliciti
- * <code>
- *     {
- *          "action" : "createByTicket" ,
- *          "jira_ticket" : "PPIT-0216" ,
- *          "title" : "titolo", "priority" : 3,
- *          "description" : "descrizione" ,
- *          "request_area" : "NPG" ,
- *          "business_service" :
- *          "Codici 900 - Singolo pagamento" ,
- *          "type" : "incident"
- *     }
- * </code>
  *
- * Parametri di output per chiamate OK
+ * Dati di output per chiamate OK
  * <code>
  *     {
  *          "status": "OK",
  *          "code": 200,
  *          "ticket_id": <ticket_id>,
- *          "ticket_number": <ticket_number>
+ *          "ticket_snow": <snow_ticket>
  *     }
  * </code>
  *
- * Parametri di output per chiamate KO
+ * Dati di output per chiamate KO
  * <code>
  *     {
  *          "status": "KO",
@@ -50,7 +36,7 @@ use pagopa\jirasnow\snow\ServiceNowApiException;
  *     }
  * </code>
  */
-class Create extends AbstractController
+class Assign extends AbstractController
 {
 
     /**
@@ -63,128 +49,49 @@ class Create extends AbstractController
      * @inheritdoc
      * @var array|string[]
      */
-    protected array $json_keys = ['action' , 'jira_ticket'];
+    protected array $json_keys = ['ticket_id'];
 
 
     /**
-     * Mappatura action <-> method
-     * E' possibile richiamare un metodo o un altro in base al valore di "action" nel json della chiamata
-     * Per evitare chiamate a qualsiasi metodo, si mappano le action con i nomi dei metodi, rendendo possibile
-     * chiamare solo determinati metodi
-     * @var array|string[]
-     */
-    protected array $mappedAction = [ 'create' => 'create', 'createByTicket' => 'createByTicket'];
-
-
-    /**
-     * Inizio logica per chiamate con context /create
+     * Inizio logica per chiamate con context /assign
      * @return void
-     * @throws ControllerException
      */
-    public function init()
+    public function init() : void
     {
         $data = json_decode($this->bootstrap->getPostData());
-        $action = $data->action;
-        if (array_key_exists($action, $this->mappedAction))
-        {
-            $method = $this->mappedAction[$action];
-            $this->$method();
-        }
-        else
-        {
-            throw new ControllerException(sprintf('Method %s doesn\'t exist', $action));
-        }
+        $ticket_id = $data->ticket_id;
+        $this->assign($ticket_id);
     }
 
-    /**
-     * Crea un ticket su Service Now ricavando le informazioni dal Ticket Jira in maniera automatica
-     * Payload chiamata
-     * <code>
-     *     {
-     *          "action" : "create" ,
-     *          "jira_ticket" : "PPIT-216"
-     *     }
-     * </code>
-     * Dove jira_ticket è l'id del ticket Jira
-     * @return void
-     */
-    public function create() : void
-    {
-        $data = json_decode($this->bootstrap->getPostData());
-        $ticket_id = $data->jira_ticket;
-
-        $jiraticket         = new Jiraticket($ticket_id);
-        $title              = $jiraticket->getTitle();
-        $priority           = $jiraticket->getPriority();
-        $description        = $jiraticket->getDescription();
-        $request_area       = $jiraticket->getRequestArea();
-        $business_service   = $jiraticket->getBusinessService();
-        $utype              = $jiraticket->getRequestType();
-
-        $this->createTicket($ticket_id, $title, $description, $utype, $business_service, $request_area, $priority);
-
-    }
 
     /**
-     * Crea un ticket su Service Now ricavando ricevendo le informazioni in input
-     * Payload chiamata
-     * Payload chiamata
-     * <code>
-     *     {
-     *          "action" : "createByTicket" ,
-     *          "jira_ticket" : "PPIT-0216",
-     *          "title" : "titolo",
-     *          "priority" : 3,
-     *          "description" : "descrizione" ,
-     *          "request_area" : "NPG" ,
-     *          "business_service" :
-     *          "Codici 900 - Singolo pagamento" ,
-     *          "type" : "incident"
-     *     }
-     * </code>
-     * Dove jira_ticket è l'id del ticket Jira
+     * Effettua l'assegnazione del ticket al team ServiceNow
+     * @param string $ticket_id
      * @return void
      */
-    public function createByTicket() : void
+    public function assign(string $ticket_id) : void
     {
-        $data = json_decode($this->bootstrap->getPostData());
-
-        $ticket_id          = $data->jira_ticket;
-        $title              = $data->title;
-        $priority           = $data->priority;
-        $description        = $data->description;
-        $request_area       = $data->request_area;
-        $business_service   = $data->business_service;
-        $utype              = $data->type;
-
-        $this->createTicket($ticket_id, $title, $description, $utype, $business_service, $request_area, $priority);
-    }
-
-    /**
-     * Effettua la create vera e propria, popolando l'output in base all'esito
-     * @param $ticket_id string id del ticket jira (serve come label a Service Now)
-     * @param $title string titolo del ticket
-     * @param $description string descrizione del ticket
-     * @param $utype string tipologia di richiesta (incident, information)
-     * @param $business_service string business server
-     * @param $request_area string request area
-     * @param $priority string priorità del ticket
-     * @return void
-     */
-    private function createTicket(string $ticket_id, string $title, string $description, string $utype, string $business_service, string $request_area, string $priority) : void
-    {
-        $output = array();
+        /**
+         * {
+         * "account": "<account-CN>>",
+         * "ticket_id": "<jira_ticket_id>",
+         * "comments": "Ticket Riassegnato Automaticamente"
+         * }
+ */
         try {
-            $servicenow_ticket = new ServiceNowAPI();
-            $servicenow_ticket->createTicket($ticket_id, $title, $description, $utype, $business_service, $request_area, $priority);
+            $jira_ticket = new JiraTicket($ticket_id);
+            $ticket_snow = $jira_ticket->getServiceNowId();
+
+            $serviceNowAPI = new ServiceNowAPI();
+            $serviceNowAPI->assignTicket($ticket_snow);
             $output = [
                 'status' => 'OK',
                 'code' => 200,
-                'ticket_id' => $servicenow_ticket->getTicketId(),
-                'ticket_number' => $servicenow_ticket->getTicketNumber()
+                'jira_ticket' => $ticket_id,
+                'ticket_id' => $ticket_snow,
             ];
         }
-        catch (ServiceNowApiException $e)
+        catch(ServiceNowApiException $e)
         {
             $output = [
                 'status' => 'KO',
@@ -194,4 +101,5 @@ class Create extends AbstractController
         }
         $this->bootstrap->setPayload($output);
     }
+
  }

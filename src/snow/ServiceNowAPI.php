@@ -5,6 +5,7 @@ namespace pagopa\jirasnow\snow;
 use pagopa\jirasnow\Config;
 use pagopa\jirasnow\HTTPClient;
 use pagopa\jirasnow\JiraTicket;
+use stdClass;
 
 class ServiceNowAPI
 {
@@ -187,8 +188,9 @@ class ServiceNowAPI
      * Restituisce il token per le chiamate. Se il token non è stato ancora richiesto, viene effettuato il fetch
      * del token
      * @return string
+     * @throws ServiceNowApiException
      */
-    public function getToken()
+    public function getToken() : string
     {
         if (empty($this->oauthToken))
         {
@@ -216,23 +218,6 @@ class ServiceNowAPI
                                  string $request_area,
                                  int $priority) : void
     {
-        /**
-         * {
-         * "account":"CN-000004213",
-         * "correlation_id":"{{issue.key}}",
-         * "correlation_display":"{{issue.key}}",
-         * "u_type":"{{utype}}",
-         * "u_contact": "819c13addb0f74507dae3885f39619fd",
-         * "priority": "{{issue.priority}}",
-         * "short_description":"{{issue.summary}}",
-         * "business_service":"{{businessservice}}",
-         * "request_area":"{{requestarea}}",
-         * "description": "{{issue.description.jsonEncode}}"
-         * }
-         *
-         * application/json
-         * Authorization Bearer {{OauthToken}}
-         */
 
         $token = $this->getToken();
         $this->client = new HTTPClient($this->urlCreateTicket, 'POST');
@@ -250,6 +235,44 @@ class ServiceNowAPI
             ->setPostField('request_area', $request_area);
         $this->client->exec();
 
+        $response = $this->fetchResponse();
+        $this->setTicketNumber($response->number);
+        $this->setTicketId($response->ticketid);
+    }
+
+
+    /**
+     * Assegna un ticket al team di ServiceNow
+     * @param string $ticket_id
+     * @return void
+     * @throws ServiceNowApiException
+     */
+    public function assignTicket(string $ticket_id) : void
+    {
+        $token = $this->getToken();
+        $this->client = new HTTPClient($this->urlAssignTicket, 'POST');
+        $this->client->getRequest()->setHeader('Content-Type', 'application/json');
+        $this->client->getRequest()->setHeader('Authorization', sprintf('Bearer %s',$token));
+        $this->client->getRequest()->setPostField('account', $this->accountCn)
+            ->setPostField('ticket_id', $ticket_id)
+            ->setPostField('comments', 'Ticket assegnato automaticamente');
+
+        $this->client->exec();
+        $this->fetchResponse();
+    }
+
+
+    /**
+     * Preleva la risposta dalla HTTPClient e fornisce la risposta in formato stdClass in caso di esito Positivo
+     * In caso di esito negativo, sia per KO delle API che per errori sul layer HTTP, lancia una ServiceNowApiException
+     * In caso di OK, l'output contiene il ramo "result" delle chiamate API a ServiceNow (ramo presente in tutte le risposte)
+     * In caso di KO delle API, la ServiceNowApiException contiene il messaggio di errore e il codice di errore dell'API
+     * In caso di KO del layer HTTP, la ServiceNowApiException contiene il messaggio di errore e il codice HTTP
+     * @return stdClass
+     * @throws ServiceNowApiException
+     */
+    private function fetchResponse() : stdClass
+    {
         $code = $this->client->getResponse()->getCode();
         if ($code == 200)
         {
@@ -257,9 +280,7 @@ class ServiceNowAPI
             $codeAPI = $response->result->code;
             if ($codeAPI == 600)
             {
-                // ticket creato, prelevare la risposta
-                $this->setTicketNumber($response->result->number);
-                $this->setTicketId($response->result->ticketid);
+                return $response->result;
             }
             else
             {

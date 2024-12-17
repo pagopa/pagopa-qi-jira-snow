@@ -94,7 +94,8 @@ class JiraTicket
     }
 
     /**
-     * Restituisce il valore del custom field TICKET_ID del ticket, che corrisponde al TICKET_ID su Service Now
+     * Restituisce il valore del custom field <b>TICKET_ID</b> del ticket, che corrisponde al <b>TICKET_ID</b> su <u>ServiceNow</u>
+     * Il campo <b>TICKET_ID</b> è in formato <b>HEX</b>
      * @return string
      */
     public function getServiceNowId() : string
@@ -103,7 +104,8 @@ class JiraTicket
     }
 
     /**
-     * Restituisce il valore del custom field TICKET_NUMBER del ticket, che corrisponde al TICKET_NUMBER su Service Now
+     * Restituisce il valore del custom field <b>TICKET_NUMBER</b> del ticket, che corrisponde al <b>TICKET_NUMBER</b> su <u>ServiceNow</u>
+     * Il campo <b>TICKET_NUMBER</b> è in formato <b>CS*</b>
      * @return string
      */
     public function getServiceNowNumber() : string
