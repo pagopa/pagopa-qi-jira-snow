@@ -201,6 +201,7 @@ class ServiceNowAPI
 
 
     /**
+     * Crea un ticket con i parametri indicati
      * @param string $jira_ticket
      * @param string $title
      * @param string $description
@@ -219,12 +220,8 @@ class ServiceNowAPI
                                  int $priority) : void
     {
 
-        $token = $this->getToken();
-        $this->client = new HTTPClient($this->urlCreateTicket, 'POST');
-        $this->client->getRequest()->setHeader('Content-Type', 'application/json');
-        $this->client->getRequest()->setHeader('Authorization', sprintf('Bearer %s',$token));
-        $this->client->getRequest()->setPostField('account', $this->accountCn)
-            ->setPostField('correlation_id', $jira_ticket)
+        $this->prepareHttpClient($this->urlCreateTicket);
+        $this->client->getRequest()->setPostField('correlation_id', $jira_ticket)
             ->setPostField('correlation_display', $jira_ticket)
             ->setPostField('u_type', $utype)
             ->setPostField('u_contact', Config::get('U_CONTACT'))
@@ -249,16 +246,30 @@ class ServiceNowAPI
      */
     public function assignTicket(string $ticket_id) : void
     {
-        $token = $this->getToken();
-        $this->client = new HTTPClient($this->urlAssignTicket, 'POST');
-        $this->client->getRequest()->setHeader('Content-Type', 'application/json');
-        $this->client->getRequest()->setHeader('Authorization', sprintf('Bearer %s',$token));
-        $this->client->getRequest()->setPostField('account', $this->accountCn)
-            ->setPostField('ticket_id', $ticket_id)
+        $this->prepareHttpClient($this->urlAssignTicket);
+        $this->client->getRequest()->setPostField('ticket_id', $ticket_id)
             ->setPostField('comments', 'Ticket assegnato automaticamente');
 
         $this->client->exec();
         $this->fetchResponse();
+    }
+
+
+    /**
+     * @param string $ticket_id
+     * @param string $comment
+     * @return void
+     * @throws ServiceNowApiException
+     */
+    public function commentTicket(string $ticket_id, string $comment) : void
+    {
+        $this->prepareHttpClient($this->urlCommentTicket);
+        $this->client->getRequest()->setPostField('ticket_id', $ticket_id)
+            ->setPostField('comments', $comment);
+
+        $this->client->exec();
+        $this->fetchResponse();
+
     }
 
 
@@ -292,6 +303,16 @@ class ServiceNowAPI
         {
             throw new ServiceNowApiException(sprintf('Error code:%s, msg: %s', $code, $this->client->getResponse()->getError()));
         }
+    }
+
+
+    private function prepareHttpClient(string $url) : void
+    {
+        $token = $this->getToken();
+        $this->client = new HTTPClient($url, 'POST');
+        $this->client->getRequest()->setHeader('Content-Type', 'application/json');
+        $this->client->getRequest()->setHeader('Authorization', sprintf('Bearer %s',$token));
+        $this->client->getRequest()->setPostField('account', $this->accountCn);
     }
 
 }
