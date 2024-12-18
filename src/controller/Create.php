@@ -37,7 +37,7 @@ use pagopa\jirasnow\snow\ServiceNowApiException;
  *          "status": "OK",
  *          "code": 200,
  *          "ticket_id": <ticket_id>,
- *          "ticket_number": <ticket_number>
+ *          "ticket_cs": <ticket_number>
  *     }
  * </code>
  *
@@ -181,7 +181,7 @@ class Create extends AbstractController
                 'status' => 'OK',
                 'code' => 200,
                 'ticket_id' => $servicenow_ticket->getTicketId(),
-                'ticket_number' => $servicenow_ticket->getTicketNumber()
+                'ticket_cs' => $servicenow_ticket->getTicketNumber()
             ];
         }
         catch (ServiceNowApiException $e)

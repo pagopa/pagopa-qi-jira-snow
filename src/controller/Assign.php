@@ -22,8 +22,9 @@ use pagopa\jirasnow\snow\ServiceNowApiException;
  *     {
  *          "status": "OK",
  *          "code": 200,
- *          "ticket_id": <ticket_id>,
- *          "ticket_snow": <snow_ticket>
+ *          "jira_ticket": <ticket_id>,
+ *          "ticket_id": <snow_ticket>,
+ *          "ticket_cs": <snow_ticket_cs>
  *     }
  * </code>
  *
@@ -81,6 +82,7 @@ class Assign extends AbstractController
         try {
             $jira_ticket = new JiraTicket($ticket_id);
             $ticket_snow = $jira_ticket->getServiceNowId();
+            $ticket_snow_cs = $jira_ticket->getServiceNowNumber();
 
             $serviceNowAPI = new ServiceNowAPI();
             $serviceNowAPI->assignTicket($ticket_snow);
@@ -89,6 +91,7 @@ class Assign extends AbstractController
                 'code' => 200,
                 'jira_ticket' => $ticket_id,
                 'ticket_id' => $ticket_snow,
+                'ticket_cs' => $ticket_snow_cs
             ];
         }
         catch(ServiceNowApiException $e)
