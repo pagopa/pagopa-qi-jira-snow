@@ -75,7 +75,8 @@ $env_var = [
     'VERIFY_CHAIN',
     'JIRA_ID_FIELD_BUSINESS_AREA_INCIDENT',
     'JIRA_ID_FIELD_BUSINESS_AREA_REQUEST',
-    'U_CONTACT'
+    'U_CONTACT',
+    'SERVICE_NOW_URL_CANCEL'
 ];
 
 foreach($env_var as $var)
