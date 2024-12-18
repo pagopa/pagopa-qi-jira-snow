@@ -274,6 +274,22 @@ class ServiceNowAPI
 
 
     /**
+     * Chiude un ticket Service Now
+     * @param string $ticket_id
+     * @return void
+     * @throws ServiceNowApiException
+     */
+    public function closeTicket(string $ticket_id)
+    {
+        $this->prepareHttpClient($this->urlCloseTicket);
+        $this->client->getRequest()->setPostField('ticket_id', $ticket_id)
+            ->setPostField('comments', 'Ticket chiuso');
+        $this->client->exec();
+        $this->fetchResponse();
+    }
+
+
+    /**
      * Preleva la risposta dalla HTTPClient e fornisce la risposta in formato stdClass in caso di esito Positivo
      * In caso di esito negativo, sia per KO delle API che per errori sul layer HTTP, lancia una ServiceNowApiException
      * In caso di OK, l'output contiene il ramo "result" delle chiamate API a ServiceNow (ramo presente in tutte le risposte)
@@ -306,6 +322,12 @@ class ServiceNowAPI
     }
 
 
+    /**
+     * Prepara la configurazione della Request con i valori comuni a tutte le api (token, content-type, account-cn)
+     * @param string $url
+     * @return void
+     * @throws ServiceNowApiException
+     */
     private function prepareHttpClient(string $url) : void
     {
         $token = $this->getToken();

@@ -7,13 +7,12 @@ use pagopa\jirasnow\snow\ServiceNowAPI;
 use pagopa\jirasnow\snow\ServiceNowApiException;
 
 /**
- * Controller che si occupa di gestire le chiamate nel contesto /comment
+ * Controller che si occupa di gestire le chiamate nel contesto /assign
  * Parametri di input per le chiamate API<br>
  * Dati input
  * <code>
  *     {
  *          "ticket_id": <jira_ticket>,
- *          "comment": <comment>
  *     }
  * </code>
  *
@@ -22,7 +21,10 @@ use pagopa\jirasnow\snow\ServiceNowApiException;
  * <code>
  *     {
  *          "status": "OK",
- *          "code": 200
+ *          "code": 200,
+ *          "jira_ticket": <ticket_id>,
+ *          "ticket_id": <snow_ticket>,
+ *          "ticket_cs": <snow_ticket_cs>
  *     }
  * </code>
  *
@@ -35,7 +37,7 @@ use pagopa\jirasnow\snow\ServiceNowApiException;
  *     }
  * </code>
  */
-class Comment extends AbstractController
+class Close extends AbstractController
 {
 
     /**
@@ -48,44 +50,48 @@ class Comment extends AbstractController
      * @inheritdoc
      * @var array|string[]
      */
-    protected array $json_keys = ['ticket_id', 'comment'];
+    protected array $json_keys = ['ticket_id'];
 
 
     /**
-     * Inizio logica per chiamate con context /comment
+     * Inizio logica per chiamate con context /close
      * @return void
      */
     public function init() : void
     {
         $data = json_decode($this->bootstrap->getPostData());
-        $jira_ticket_id = $data->ticket_id;
-        $comment = $data->comment;
-        $this->comment($jira_ticket_id, $comment);
+        $ticket_id = $data->ticket_id;
+        $this->close($ticket_id);
     }
 
 
     /**
      * Effettua l'assegnazione del ticket al team ServiceNow
-     * @param string $jira_ticket_id
-     * @param string $comment
+     * @param string $ticket_id
      * @return void
      */
-    public function comment(string $jira_ticket_id, string $comment) : void
+    public function close(string $ticket_id) : void
     {
-
+        /**
+         * {
+         * "account": "<account-CN>>",
+         * "ticket_id": "<jira_ticket_id>",
+         * "comments": "Ticket Chiuso"
+         * }
+ */
         try {
-            $jira_ticket = new JiraTicket($jira_ticket_id);
+            $jira_ticket = new JiraTicket($ticket_id);
             $ticket_snow = $jira_ticket->getServiceNowId();
             $ticket_snow_cs = $jira_ticket->getServiceNowNumber();
 
             $serviceNowAPI = new ServiceNowAPI();
-            $serviceNowAPI->commentTicket($ticket_snow, $comment);
+            $serviceNowAPI->closeTicket($ticket_snow);
             $output = [
                 'status' => 'OK',
                 'code' => 200,
-                'jira_ticket_id' => $jira_ticket_id,
+                'jira_ticket' => $ticket_id,
                 'ticket_id' => $ticket_snow,
-                'ticket_cs' => $ticket_snow_cs,
+                'ticket_cs' => $ticket_snow_cs
             ];
         }
         catch(ServiceNowApiException $e)
