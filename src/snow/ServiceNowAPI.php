@@ -53,6 +53,13 @@ class ServiceNowAPI
 
 
     /**
+     * Contiene la url API per la cancellazione di un ticket
+     * @var string
+     */
+    protected string $urlCancelTicket;
+
+
+    /**
      * Contiene il token per effettuare le richieste
      * @var string
      */
@@ -100,6 +107,7 @@ class ServiceNowAPI
         $this->urlCloseTicket = Config::get('SERVICE_NOW_URL_CLOSE');
         $this->urlAssignTicket = Config::get('SERVICE_NOW_URL_ASSIGN');
         $this->urlCommentTicket = Config::get('SERVICE_NOW_URL_COMMENT');
+        $this->urlCancelTicket = Config::get('SERVICE_NOW_URL_CANCEL');
         $this->clientId = Config::get('SERVICE_NOW_CLIENT_ID');
         $this->clientSecret = Config::get('SERVICE_NOW_CLIENT_SECRET');
         $this->accountCn = Config::get('SERVICE_NOW_ACCOUNT_CN');
@@ -274,16 +282,32 @@ class ServiceNowAPI
 
 
     /**
-     * Chiude un ticket Service Now
+     * Chiude un ticket ServiceNow
      * @param string $ticket_id
      * @return void
      * @throws ServiceNowApiException
      */
-    public function closeTicket(string $ticket_id)
+    public function closeTicket(string $ticket_id) : void
     {
         $this->prepareHttpClient($this->urlCloseTicket);
         $this->client->getRequest()->setPostField('ticket_id', $ticket_id)
             ->setPostField('comments', 'Ticket chiuso');
+        $this->client->exec();
+        $this->fetchResponse();
+    }
+
+
+    /**
+     * Cancella un ticket precedentemente aperto
+     * @param string $ticket_id
+     * @return void
+     * @throws ServiceNowApiException
+     */
+    public function cancelTicket(string $ticket_id) : void
+    {
+        $this->prepareHttpClient($this->urlCancelTicket);
+        $this->client->getRequest()->setPostField('ticket_id', $ticket_id)
+            ->setPostField('comments', 'Ticket cancellato');
         $this->client->exec();
         $this->fetchResponse();
     }
