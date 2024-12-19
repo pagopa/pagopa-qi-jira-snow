@@ -1,17 +1,15 @@
-FROM php:8.3-apache
+FROM composer:latest as composer
+RUN mkdir -p /tmp/repo
+COPY . /tmp/repo/
+WORKDIR /tmp/repo
+RUN rm -rf LICENSE README.md .gitignore && composer install
 
-# update repo e installazione dipendenze php
+
+FROM php:8.3-apache
+COPY --from=composer /tmp/repo /var/www/html
 RUN apt -y update && \
    apt -y upgrade && \
-   apt -y install git libzip-dev zip curl && \
-   docker-php-ext-install zip && \
+   apt -y install curl && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
-   mkdir -p download
-
-# installazione composer
-RUN cd /tmp && \
-   curl -k https://getcomposer.org/installer -o composer-setup.php && \
-   php composer-setup.php && \
-   mv composer.phar /usr/local/bin/composer && \
-   rm -f composer-setup.php && \
-   a2enmod rewrite
+   mkdir -p download && \
+    a2enmod rewrite
