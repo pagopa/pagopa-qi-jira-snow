@@ -75,12 +75,7 @@ class JiraTicket
     public function __construct(mixed $id)
     {
         $this->prefix = Config::get("PREFIX_JIRA");
-        $ticket_id = $id;
-        if (is_numeric($id))
-        {
-            $ticket_id = sprintf('%s-%s', $this->prefix, $id);
-        }
-        $this->id = $ticket_id;
+        $this->setJiraId($id);
 
         $this->custom_field_x_ticket_id = Config::get("JIRA_ID_FIELD_TICKET_ID");
         $this->custom_field_x_ticket_number = Config::get("JIRA_ID_FIELD_TICKET_NUMBER");
@@ -89,7 +84,7 @@ class JiraTicket
         $this->token_x_download_jira = Config::get("JIRA_BEARER_TOKEN_FOR_DOWNLOAD");
 
         $jira_ticket = new IssueService();
-        $this->issueService = $jira_ticket->get($this->id);
+        $this->issueService = $jira_ticket->get($this->getJiraId());
 
     }
 
@@ -124,6 +119,16 @@ class JiraTicket
         return new DateTime($date);
     }
 
+
+
+    /**
+     * Restituisce l'id del ticket Jira nel formato <PRJ>-<ID>
+     * @return string
+     */
+    public function getJiraId() : string
+    {
+        return $this->id;
+    }
 
     /**
      * Restituisce la lista degli allegati del ticket
@@ -180,35 +185,6 @@ class JiraTicket
         $attach = $this->getAttachment($index);
         return $attach->author->accountId;
     }
-
-
-    /**
-     * Imposta un valore per il campo LAST_SENT del ticket
-     * @param DateTime $last_sent
-     * @return void
-     * @throws JiraException
-     */
-    public function setLastSent(\DateTime $last_sent) : void
-    {
-        // use c
-        // ISO 8601 date
-        // example: 2004-02-12T15:19:21+00:00
-        $issueField = new IssueField(true);
-        $issueField->addCustomField($this->custom_field_x_last_sent, $last_sent->format('c'));
-        $issueService = new IssueService();
-        $issueService->update($this->id, $issueField);
-    }
-
-
-    /**
-     * Sincronizza gli allegati
-     * @return void
-     */
-    public function syncAttach()
-    {
-
-    }
-
 
     /**
      * Restituisce il titolo di un ticket Jira
@@ -308,4 +284,56 @@ class JiraTicket
         return $this->issueService->fields->customFields[$var]->child->value;
     }
 
+    /**
+     * Imposta un valore per il campo LAST_SENT del ticket
+     * @param DateTime $last_sent
+     * @return void
+     * @throws JiraException
+     */
+    public function setLastSent(\DateTime $last_sent) : void
+    {
+        // use c
+        // ISO 8601 date
+        // example: 2004-02-12T15:19:21+00:00
+        $issueField = new IssueField(true);
+        $issueField->addCustomField($this->custom_field_x_last_sent, $last_sent->format('c'));
+        $issueService = new IssueService();
+        $issueService->update($this->id, $issueField);
+    }
+
+    /**
+     * Configura l'id del ticket Jira
+     * @param string $id
+     * @return void
+     */
+    public function setJiraId(string $id) : void
+    {
+        $ticket_id = $id;
+        if (is_numeric($id))
+        {
+            $ticket_id = sprintf('%s-%s', $this->prefix, $id);
+        }
+        $this->id = $ticket_id;
+    }
+
+    /**
+     * Sincronizza gli allegati
+     * @return void
+     */
+    public function syncAttach()
+    {
+        /**
+         * prelevo il lastSent
+         * ciclo tutti gli allegati del ticket
+         *   se è un attachment da sincronizzare (ovvero se l'attachment non è caricato da un certo utente ed ha la data di caricamento superiore a LastSent)
+         *   mi prendo l'attachment ed altre info (tipo il size)
+         *   effettuo il download con una HTTPClient banale (sempre senza mutua autenticazione e senza forwarder)
+         *   salvo il file in locale
+         *   preparo la chiamata per fare l'upload
+         *
+         *
+         */
+
+
+    }
 }
