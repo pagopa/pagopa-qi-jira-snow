@@ -180,6 +180,7 @@ class Create extends AbstractController
             $output = [
                 'status' => 'OK',
                 'code' => 200,
+                'jira_ticket_id', $ticket_id,
                 'ticket_id' => $servicenow_ticket->getTicketId(),
                 'ticket_cs' => $servicenow_ticket->getTicketNumber()
             ];
