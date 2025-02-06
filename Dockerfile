@@ -13,3 +13,6 @@ RUN apt -y update && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
    mkdir -p download && \
     a2enmod rewrite
+
+### Apache (proxies to MapProxy).
+EXPOSE 8080

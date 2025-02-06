@@ -1,0 +1,119 @@
+microservice-chart: &microservice-chart
+  namespace: "qi"
+  nameOverride: ""
+  fullnameOverride: ""
+  image:
+    repository: ghcr.io/pagopa/pagopa-qi-jira-snow
+    tag: "0.11.35"
+    pullPolicy: Always
+  # https://github.com/Azure/azure-functions-host/blob/dev/src/WebJobs.Script.WebHost/Controllers/HostController.cs
+  livenessProbe:
+    httpGet:
+      path: /info
+      port: 80
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /info
+      port: 80
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+  deployment:
+    create: true
+  serviceMonitor:
+    create: true
+    endpoints:
+      - interval: 10s #jmx-exporter
+        targetPort: 12345
+        path: /metrics
+  ports:
+    - 80 #http
+    - 12345 #jmx-exporter
+  service:
+    type: ClusterIP
+    ports:
+      - 80 #http
+      - 12345 #jmx-exporter
+  ingress: &ingress
+    create: true
+    host: "weudev.qi.internal.dev.platform.pagopa.it"
+    path: /pagopa-qi-jira-snow-service/(.*)
+    servicePort: 80
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+  podAnnotations: {}
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+  resources: &resources
+    requests:
+      memory: "512Mi"
+      cpu: "0.5"
+    limits:
+      memory: "1024Mi"
+      cpu: "0.7"
+  autoscaling:
+    enable: true
+    minReplica: 1
+    maxReplica: 1
+    pollingInterval: 10 # seconds
+    cooldownPeriod: 50 # seconds
+    triggers:
+      - type: cpu
+        metadata:
+          # Required
+          type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+          value: "80"
+      - type: memory
+        metadata:
+          # Required
+          type: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+          value: "80"
+  fileConfig: {}
+  envConfig: &envConfig
+    WEBSITE_SITE_NAME: "pagopaqijirasnow" # required to show cloud role name in application insights
+    FUNCTIONS_WORKER_RUNTIME: "java"
+  envFieldRef: &envFieldRef
+    APP_NAME: "metadata.labels['app.kubernetes.io/instance']"
+    APP_VERSION: "metadata.labels['app.kubernetes.io/version']"
+  envSecret: &envSecret
+    APPLICATIONINSIGHTS_CONNECTION_STRING: 'ai-d-connection-string'
+  keyvault:
+    name: "pagopa-d-qi-kv"
+    tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node_type
+                operator: In
+                values:
+                  - "user"
+  canaryDelivery:
+    create: false
+    deployment:
+      create: false
+      image:
+        tag: 0.5.6
+  create: false
+# 1 - datastore instance
+pagopa-qi-jira-snow:
+  !!merge <<: *microservice-chart
+  ingress:
+    !!merge <<: *ingress
+  resources:
+    !!merge <<: *resources
+  envConfig:
+    !!merge <<: *envConfig
+  envSecret:
+    !!merge <<: *envSecret

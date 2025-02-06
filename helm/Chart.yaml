@@ -1,0 +1,11 @@
+apiVersion: v2
+name: pagopa-qi-jira-snow
+description: Microservice to store JIRA SERVICE NOW
+type: application
+version: 0.86.0
+appVersion: 0.11.35
+dependencies:
+  - name: microservice-chart
+    version: 2.8.0
+    repository: "https://pagopa.github.io/aks-microservice-chart-blueprint"
+    alias: pagopa-qi-jira-snow
