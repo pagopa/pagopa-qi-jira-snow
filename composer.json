@@ -1,7 +1,7 @@
 {
   "name" : "pagopa/sync_attach_jira_snow",
   "author": "Simone Esposito",
-  "version" : "1.0.0",
+  "version" : "1.0.1",
   "autoload": {
     "psr-4": {
       "pagopa\\jirasnow\\": "src/"
