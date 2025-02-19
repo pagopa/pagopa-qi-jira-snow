@@ -4,21 +4,21 @@ microservice-chart: &microservice-chart
   fullnameOverride: ""
   image:
     repository: ghcr.io/pagopa/pagopa-qi-jira-snow
-    tag: "0.11.35"
+    tag: "latest"
     pullPolicy: Always
   # https://github.com/Azure/azure-functions-host/blob/dev/src/WebJobs.Script.WebHost/Controllers/HostController.cs
   livenessProbe:
     httpGet:
       path: /info
       port: 80
-    initialDelaySeconds: 60
+    initialDelaySeconds: 30
     failureThreshold: 6
     periodSeconds: 10
   readinessProbe:
     httpGet:
       path: /info
       port: 80
-    initialDelaySeconds: 60
+    initialDelaySeconds: 30
     failureThreshold: 6
     periodSeconds: 10
   deployment:
@@ -80,13 +80,48 @@ microservice-chart: &microservice-chart
   envConfig: &envConfig
     WEBSITE_SITE_NAME: "pagopaqijirasnow" # required to show cloud role name in application insights
     FUNCTIONS_WORKER_RUNTIME: "java"
+    ENVNAME: "PROD"
+    PREFIX_JIRA: "PPI" # app environment var
+    JIRA_HOST: "https://pagopa.atlassian.net" # library php-jira-rest-client environment var
+    TOKEN_BASED_AUTH: "false" # if TOKEN_BASED_AUTH set to true, ignore JIRA_USER and JIRA_PASS.
+    JIRA_ID_FIELD_TICKET_ID: "customfield_10554" # id del custom field per il campo TICKET_ID (quello che è in formato esadecimale)
+    JIRA_ID_FIELD_TICKET_NUMBER: "customfield_10555" # id del custom field per il campo TICKET_NUMBER (quello che inizia con CS)
+    JIRA_ID_FIELD_LAST_SENT: "customfield_10848" # id del custom field per il campo LastSent
+    JIRA_ID_FIELD_BUSINESS_AREA_INCIDENT: "customfield_10846" # id del campo business area per i ticket di tipo incident
+    JIRA_ID_FIELD_BUSINESS_AREA_REQUEST: "customfield_10847" # id del campo business area per i ticket di tipo request information
+    JIRA_ID_TYPE_INCIDENT: "11252" # id della tipologia di ticket incident
+    JIRA_ID_TYPE_REQUEST: "11253" # id della tipologia di ticket request information
+    USE_PAGOPA_FORWARDER: "false" # conf forwarder pagoPA per la mutua autenticazione verso Service Now Nexi
+    FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-app-forwarder/api/v1/forward"
+    USE_MTLS: "true" # mutual auth
+    CERTIFICATE_FORMAT: "PEM"
+    VERIFY_CHAIN: "false"
   envFieldRef: &envFieldRef
     APP_NAME: "metadata.labels['app.kubernetes.io/instance']"
     APP_VERSION: "metadata.labels['app.kubernetes.io/version']"
   envSecret: &envSecret
     APPLICATIONINSIGHTS_CONNECTION_STRING: 'ai-p-connection-string'
+    JIRA_USER: 'JIRA-USER' 
+    JIRA_PASS: 'JIRA-PASS' 
+    JIRA_BEARER_TOKEN_FOR_DOWNLOAD: 'JIRA-BEARER-TOKEN-FOR-DOWNLOAD' 
+    JIRA_ACCOUNT_ID_IGNORE_ATTACH: 'JIRA-ACCOUNT-ID-IGNORE-ATTACH' 
+    JIRA_EMAIL_ADDRESS_USER_NEXI: 'JIRA-EMAIL-ADDRESS-USER-NEXI' 
+    SERVICE_NOW_CLIENT_ID: 'SERVICE-NOW-CLIENT-ID' 
+    SERVICE_NOW_CLIENT_SECRET: 'SERVICE-NOW-CLIENT-SECRET' 
+    SERVICE_NOW_ACCOUNT_CN: 'SERVICE-NOW-ACCOUNT-CN' 
+    SERVICE_NOW_URL_OAUTH_TOKEN: 'SERVICE-NOW-URL-OAUTH-TOKEN' 
+    SERVICE_NOW_URL_ATTACH: 'SERVICE-NOW-URL-ATTACH' 
+    SERVICE_NOW_URL_CREATE: 'SERVICE-NOW-URL-CREATE' 
+    SERVICE_NOW_URL_CLOSE: 'SERVICE-NOW-URL-CLOSE' 
+    SERVICE_NOW_URL_ASSIGN: 'SERVICE-NOW-URL-ASSIGN' 
+    SERVICE_NOW_URL_COMMENT: 'SERVICE-NOW-URL-COMMENT' 
+    SERVICE_NOW_URL_CANCEL: 'SERVICE-NOW-URL-CANCEL' 
+    FORWARDER_SUBSCRIPTION_KEY: 'FORWARDER-SUBSCRIPTION-KEY' 
+    CERTIFICATE_KEY: 'CERTIFICATE-KEY' 
+    CERTIFICATE_PUBLIC: 'CERTIFICATE-PUBLIC' 
+    U_CONTACT: 'U-CONTACT'
   keyvault:
-    name: "pagopa-p-bizevents-kv"
+    name: "pagopa-p-qi-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
   nodeSelector: {}
   tolerations: []

@@ -44,3 +44,5 @@ recreate.sh
 *.crt
 *.key
 
+**/.terraform
+*.tmp
