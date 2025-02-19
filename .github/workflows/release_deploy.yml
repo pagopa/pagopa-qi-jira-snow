@@ -84,12 +84,6 @@ jobs:
         name: Set Output
         run: echo "environment=${{env.ENVIRNOMENT}}" >> $GITHUB_OUTPUT
 
-      - name: Get Version
-        shell: bash
-        run: |
-
-          cat composer.json | jq '.version'
-
   # release:
   #   name: Create a New Release
   #   runs-on: ubuntu-latest
@@ -120,6 +114,14 @@ jobs:
           branch: ${{ github.ref_name}}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.release.outputs.version }}
+
+      - name: Get Version
+        shell: bash
+        run: |
+
+          cat composer.json | jq '.version'
+
+
 
   deploy_aks:
     name: Deploy on AKS
