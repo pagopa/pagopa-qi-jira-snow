@@ -84,6 +84,11 @@ jobs:
         name: Set Output
         run: echo "environment=${{env.ENVIRNOMENT}}" >> $GITHUB_OUTPUT
 
+      - name: Get Version
+        shell: bash
+        run: |
+
+          cat composer.json | jq '.version'
 
   # release:
   #   name: Create a New Release
