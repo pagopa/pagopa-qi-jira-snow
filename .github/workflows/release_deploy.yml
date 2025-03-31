@@ -2,6 +2,8 @@ name: Release And Deploy
 
 # Controls when the workflow will run
 on:
+  merge_group:
+    branches: [ main ]
   pull_request:
     types: [ closed ]
 
@@ -16,18 +18,21 @@ on:
           - dev
           - uat
           - prod
-          - all
       beta:
         required: false
         type: boolean
         description: deploy beta version on AKS
         default: false
-      skip_release:
-        required: false
-        type: boolean
-        description: skip the release. Only deploy
-        default: false
 
+      version:
+        required: false
+        type: choice
+        description: Select the version
+        options:
+          - patch
+          - skip_or_promote
+          - new_release
+          - breaking_change
 
 permissions:
   packages: write
@@ -55,19 +60,29 @@ jobs:
       # Set Semvar
       - run: echo "SEMVER=patch" >> $GITHUB_ENV
 
-      - if: ${{ (github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'breaking-change')) }}
-        run: echo "SEMVER=major" >> $GITHUB_ENV
+      - if: ${{ (github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'skip')) }}
+        run: echo "SEMVER=skip" >> $GITHUB_ENV
 
-      - if: ${{ inputs.environment == 'uat' }}
+      - if: ${{ (github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'patch')) }}
+        run: echo "SEMVER=patch" >> $GITHUB_ENV
+
+      - if: ${{ (github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'minor')) }}
         run: echo "SEMVER=minor" >> $GITHUB_ENV
 
-      - if: ${{ inputs.environment == 'prod' }}
-        run: echo "SEMVER=skip" >> $GITHUB_ENV
+      - if: ${{ (github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'major')) }}
+        run: echo "SEMVER=major" >> $GITHUB_ENV
+
+      # force semver if dev, !=main or skip release
+      - if: ${{ inputs.version == 'new_release' }}
+        run: echo "SEMVER=minor" >> $GITHUB_ENV
+
+      - if: ${{ inputs.version == 'breaking_change' }}
+        run: echo "SEMVER=major" >> $GITHUB_ENV
 
       - if: ${{ github.ref_name != 'main' }}
         run: echo "SEMVER=buildNumber" >> $GITHUB_ENV
 
-      - if: ${{ inputs.skip_release }}
+      - if: ${{ inputs.version == 'skip_or_promote' }}
         run: echo "SEMVER=skip" >> $GITHUB_ENV
 
       - id: get_semver
@@ -83,7 +98,6 @@ jobs:
       - id: get_env
         name: Set Output
         run: echo "environment=${{env.ENVIRNOMENT}}" >> $GITHUB_OUTPUT
-
 
   # release:
   #   name: Create a New Release
@@ -106,28 +120,31 @@ jobs:
     needs: [ setup ]
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    if: ${{ inputs.semver != 'skip' }}
+    if: ${{ needs.setup.outputs.semver != 'skip' }}
     steps:
       - name: Build and Push
         id: semver
         uses: pagopa/github-actions-template/ghcr-build-push@d91a1fd0b913c9830589be5d86cdb71c90813fae # v1.5.4
         with:
-          branch: ${{ github.ref_name}}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.release.outputs.version }}
+
+      - name: Get Version
+        shell: bash
+        run: |
+
+          cat composer.json | jq '.version'
+
+
 
   deploy_aks:
     name: Deploy on AKS
     # needs: [ setup, release, image ]
     needs: [ setup, image ]
     if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    strategy:
-      matrix:
-        environment: [ dev, uat, prod ]
     uses: ./.github/workflows/deploy_with_github_runner.yml
     with:
-      environment: ${{ matrix.environment }}
-      target: ${{ needs.setup.outputs.environment }}
+      environment: ${{ needs.setup.outputs.environment }}
     secrets: inherit
 
   # notify:

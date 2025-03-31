@@ -2,9 +2,9 @@
 
 namespace pagopa\jirasnow\snow;
 
+use CURLFile;
 use pagopa\jirasnow\Config;
 use pagopa\jirasnow\HTTPClient;
-use pagopa\jirasnow\JiraTicket;
 use stdClass;
 
 class ServiceNowAPI
@@ -58,13 +58,17 @@ class ServiceNowAPI
      */
     protected string $urlCancelTicket;
 
+    /**
+     * Contiene la url API per l'upload di allegati
+     * @var string
+     */
+    protected string $urlUploadAttach;
 
     /**
      * Contiene il token per effettuare le richieste
      * @var string
      */
     protected string $oauthToken;
-
 
     /**
      * Contiene il client id per l'autenticazione
@@ -108,6 +112,7 @@ class ServiceNowAPI
         $this->urlAssignTicket = Config::get('SERVICE_NOW_URL_ASSIGN');
         $this->urlCommentTicket = Config::get('SERVICE_NOW_URL_COMMENT');
         $this->urlCancelTicket = Config::get('SERVICE_NOW_URL_CANCEL');
+        $this->urlUploadAttach = Config::get('SERVICE_NOW_URL_ATTACH');
         $this->clientId = Config::get('SERVICE_NOW_CLIENT_ID');
         $this->clientSecret = Config::get('SERVICE_NOW_CLIENT_SECRET');
         $this->accountCn = Config::get('SERVICE_NOW_ACCOUNT_CN');
@@ -310,6 +315,72 @@ class ServiceNowAPI
             ->setPostField('comments', 'Ticket cancellato');
         $this->client->exec();
         $this->fetchResponse();
+    }
+
+    /**
+     * Effettua l'upload di un singolo allegato su Service Now Nexi
+     * @param $filename
+     * @param $ticket_id
+     * @return mixed
+     * @throws ServiceNowApiException
+     */
+    public function uploadAttach($filename, $ticket_id) : mixed
+    {
+        $curlFile = new CURLFile($filename);
+        $mimetype_Replace = [
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'application/msword',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'application/vnd.ms-excel'
+        ];
+
+        $mimeType = mime_content_type($filename);
+        if (array_key_exists($mimeType, $mimetype_Replace))
+        {
+            $mimeType = $mimetype_Replace[$mimeType];
+        }
+
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->getToken(),
+            'Content-Type' => $mimeType
+        ];
+
+        $qs = [
+            'table_name' => 'sn_customerservice_case',
+            'table_sys_id' => $ticket_id,
+            'file_name' => basename($filename)
+        ];
+
+
+        $queryString = (count($qs) == 0) ? "" : sprintf('?%s', http_build_query($qs, "", null, PHP_QUERY_RFC3986));
+        $url_attach = sprintf('%s%s', $this->urlUploadAttach, $queryString);
+
+
+        $token = $this->getToken();
+        $client = new HTTPClient($url_attach, 'POST');
+        $client->getRequest()->setHeader('Content-Type', $mimeType);
+        $client->getRequest()->setHeader('Authorization', sprintf('Bearer %s',$token));
+        $client->getRequest()->setPostField('', $filename);
+        $client->exec();
+        $response = $client->getResponse()->getResponseBody();
+        $code = $client->getResponse()->getCode();
+        $json_response = json_decode($response);
+        unlink($filename);
+        if (($code == 200) || ($code == 201))
+        {
+            $size_bytes = $json_response->result->size_bytes;
+            return [
+                'size_bytes' => $size_bytes,
+                'code' => $code,
+                'status' => 'OK'
+            ];
+        }
+        else
+        {
+            return [
+                'code' => $code,
+                'details' => $json_response->result->details,
+                'status' => 'KO'
+            ];
+        }
     }
 
 

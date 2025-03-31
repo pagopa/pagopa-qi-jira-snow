@@ -9,6 +9,8 @@ use JiraRestApi\Issue\Issue;
 use JiraRestApi\Issue\IssueField;
 use JiraRestApi\Issue\IssueService;
 use JiraRestApi\JiraException;
+use pagopa\jirasnow\snow\ServiceNowAPI;
+use pagopa\jirasnow\snow\ServiceNowApiException;
 
 
 /**
@@ -317,11 +319,90 @@ class JiraTicket
     }
 
     /**
-     * Sincronizza gli allegati
-     * @return void
+     * Restituisce true/false se un attachment è da considerare pronto per l'invio su Service Now
+     * @param int $index Posizione dell'allegato nella lista degli allegati restituita da Jira
+     * @param DateTime|null $last_sent Usata per confrontare se la data dell'allegato è antecedente alla richiesta di invio verso Service Now. Se null usa il valore del campo LAST_SENT del ticket Jira
+     * @return bool
+     * @throws Exception
      */
-    public function syncAttach()
+    public function isAttachmentToSync(int $index, DateTime $last_sent = null) : bool
     {
+        $attachment = $this->getAttachment($index);
+        if (is_null($attachment))
+        {
+            return false;
+        }
+
+        if ($this->getAuthorIdAttach($index) == $this->ignore_upload_file_by_id)
+        {
+            return false;
+        }
+
+        $attach_created_time = new DateTime($attachment->created);
+        $jira_last_send = (is_null($last_sent)) ? $this->getLastSent() : $last_sent;
+
+        if ($attach_created_time > $jira_last_send)
+        {
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
+     * Sincronizza gli allegati
+     * @param DateTime|null $from
+     * @return mixed Restituisce un array di file nel caso in cui l'upload avviene correttamente
+     * @throws ServiceNowApiException
+     */
+    public function syncAttach(DateTime $from = null) : mixed
+    {
+        if (is_null($from))
+        {
+            $from = $this->getLastSent();
+        }
+        $to_upload = []; // lista file da caricare
+        for($i=0;$i<$this->getAttachmentsCount();$i++)
+        {
+            if ($this->isAttachmentToSync($i, $from))
+            {
+                $attachment = $this->getAttachment($i);
+
+                $url_content = $attachment->content;
+                $size_bytes = $attachment->size;
+                $headers = [
+                    'Content-Type: application/octet-stream',
+                    sprintf('Authorization: Basic %s', $this->token_x_download_jira)
+                ];
+                $filename = $attachment->filename;
+                $fullpath = sprintf('%s/%s', './download', $filename);
+
+                $fp = fopen($fullpath, 'w');
+
+                $c = curl_init($url_content);
+                curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($c, CURLOPT_FOLLOWLOCATION, 1);
+                curl_setopt($c, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($c, CURLOPT_FILE, $fp);
+                curl_exec($c);
+                //$response = curl_exec($c);
+                curl_close($c);
+                $to_upload[] = [
+                    'local_file' => $fullpath,
+                    'jira_file' => $filename,
+                    'jira_size_bytes' => $size_bytes,
+                ];
+            }
+        }
+        $serviceNowAPI = new ServiceNowAPI($this->getServiceNowNumber(), $this->getServiceNowId());
+        foreach($to_upload as $key => $file)
+        {
+            //echo $file .' - ' .$this->getServiceNowId() .PHP_EOL;
+            $file_to_send = $file['local_file'];
+            $to_upload[$key]['upload_status'] = $serviceNowAPI->uploadAttach($file_to_send, $this->getServiceNowId());
+        }
+
+        return $to_upload;
         /**
          * prelevo il lastSent
          * ciclo tutti gli allegati del ticket
@@ -333,7 +414,6 @@ class JiraTicket
          *
          *
          */
-
 
     }
 }

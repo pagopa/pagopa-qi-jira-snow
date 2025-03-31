@@ -114,6 +114,13 @@ class HTTPRequest
 
 
     /**
+     * Lista dei file da inviare
+     * @var array
+     */
+    protected array $postFiles = array();
+
+
+    /**
      * Attiva o disattiva la verifica della catena di certificazione
      * @var bool
      */
@@ -300,18 +307,27 @@ class HTTPRequest
 
         if ($this->method == 'POST')
         {
-            $postData = $this->postFields;
-            if ($this->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+            if (count($this->postFiles) > 0)
             {
-                $postData = http_build_query($this->postFields);
+                foreach($this->postFiles as $file)
+                {
+                    curl_setopt($this->httpClient, CURLOPT_POSTFIELDS, file_get_contents($file));
+                }
             }
-            if ($this->getHeader('Content-Type') == 'application/json')
+            else
             {
-                $postData = json_encode($postData);
+                $postData = $this->postFields;
+                if ($this->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+                {
+                    $postData = http_build_query($this->postFields);
+                }
+                if ($this->getHeader('Content-Type') == 'application/json')
+                {
+                    $postData = json_encode($postData);
+                }
+                curl_setopt($this->httpClient, CURLOPT_POSTFIELDS, $postData);
             }
-            curl_setopt($this->httpClient, CURLOPT_POSTFIELDS, $postData);
         }
-
     }
 
 
@@ -338,13 +354,18 @@ class HTTPRequest
 
 
     /**
-     * Configura un campo ed il suo valore per le chiamate post
+     * Configura un campo ed il suo valore per le chiamate post. Se value è un file fisico, lo inserisce nella lista dei file
      * @param string $name
      * @param string $value
      * @return self
      */
     public function setPostField(string $name, string $value) : self
     {
+        if (file_exists($value))
+        {
+            $this->postFiles[$name] = $value;
+            return $this;
+        }
         $this->postFields[$name] = $value;
         return $this;
     }
