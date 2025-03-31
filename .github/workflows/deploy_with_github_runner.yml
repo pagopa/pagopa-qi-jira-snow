@@ -7,33 +7,10 @@ on:
         required: true
         description: The name of the environment where to deploy
         type: string
-      helm_options:
-        default: ''
-        required: false
-        type: string
-        description: 'helm upgrade options'
-      terraform_options:
-        default: ''
-        required: false
-        type: string
-        description: 'terraform upgrade options'
       branch:
         required: false
         default: ${{ github.ref_name }}
         type: string
-      suffix_name:
-        required: false
-        default: ''
-        type: string
-      pr_number:
-        required: false
-        default: ''
-        type: string
-      uninstall:
-        description: 'true if you want to uninstall instead of install'
-        required: false
-        type: boolean
-        default: false
 
 env:
   APP_NAME: pagopaqijirasnow
@@ -50,10 +27,11 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Deploy
+        if: ${{ inputs.uninstall  == 'false' ||  inputs.uninstall  == false }}
         uses: pagopa/github-actions-template/aks-deploy@main
         with:
           branch: ${{ github.ref_name }}
-          client_id: ${{ secrets.CLIENT_ID }}
+          client_id: ${{ secrets.CD_CLIENT_ID }}
           subscription_id: ${{ secrets.SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.TENANT_ID }}
           env: ${{ inputs.environment }}
@@ -61,4 +39,4 @@ jobs:
           cluster_name: ${{ vars.CLUSTER_NAME }}
           resource_group: ${{ vars.CLUSTER_RESOURCE_GROUP }}
           app_name: ${{ env.APP_NAME }}
-          helm_upgrade_options: '--debug --set microservice-chart.azure.workloadIdentityClientId=${{vars.WORKLOAD_IDENTITY_ID}}'
+          helm_upgrade_options: '--debug --set pagopa-qi-jira-.azure.workloadIdentityClientId=${{vars.WORKLOAD_IDENTITY_ID}}'
