@@ -10,10 +10,15 @@ COPY --from=composer /tmp/repo /var/www/html
 RUN apt -y update && \
    apt -y upgrade && \
    apt -y install curl && \
+   sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf && \
+   sed -i 's/VirtualHost \*:80/VirtualHost \*:8080/' /etc/apache2/sites-available/000-default.conf && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
    mkdir -p download && \
-   sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf && sed -i 's/VirtualHost \*:80/VirtualHost \*:8080/' /etc/apache2/sites-available/000-default.conf \
-    a2enmod rewrite
+   a2enmod rewrite
+
+# Change the Apache listening port from 80 to 8080
+# RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf \
+#     && sed -i 's/VirtualHost \*:80/VirtualHost \*:8080/' /etc/apache2/sites-available/000-default.conf
 
 ### Apache (proxies to MapProxy).
 EXPOSE 8080
