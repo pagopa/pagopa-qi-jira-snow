@@ -12,6 +12,7 @@ RUN apt -y update && \
    apt -y install curl && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
    mkdir -p download && \
+   sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf && sed -i 's/VirtualHost \*:80/VirtualHost \*:8080/' /etc/apache2/sites-available/000-default.conf \
     a2enmod rewrite
 
 ### Apache (proxies to MapProxy).
