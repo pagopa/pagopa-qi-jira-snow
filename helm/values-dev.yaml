@@ -41,7 +41,7 @@ microservice-chart: &microservice-chart
     create: true
     host: "weudev.qi.internal.dev.platform.pagopa.it"
     path: /pagopa-qi-jira-snow-service/(.*)
-    servicePort: 80
+    servicePort: 8080
   serviceAccount:
     name: "qi-workload-identity"
   azure:
@@ -78,6 +78,7 @@ microservice-chart: &microservice-chart
           value: "80"
   fileConfig: {}
   envConfig: &envConfig
+    ASPNETCORE_URLS: "http://*:8080"
     WEBSITE_SITE_NAME: "pagopaqijirasnow" # required to show cloud role name in application insights
     FUNCTIONS_WORKER_RUNTIME: "java"
     ENVNAME: "DEV"
