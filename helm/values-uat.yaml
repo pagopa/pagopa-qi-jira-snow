@@ -91,6 +91,7 @@ microservice-chart: &microservice-chart
     JIRA_ID_FIELD_BUSINESS_AREA_REQUEST: "customfield_10561" # id del campo business area per i ticket di tipo request information
     JIRA_ID_TYPE_INCIDENT: "11242" # id della tipologia di ticket incident
     JIRA_ID_TYPE_REQUEST: "11243" # id della tipologia di ticket request information
+    DOWNLOAD_DIR: "/tmp/download_file" # temp directory per download file da allegare
     USE_PAGOPA_FORWARDER: "false" # conf forwarder pagoPA per la mutua autenticazione verso Service Now Nexi
     FORWARDER_URL: "https://api.uat.platform.pagopa.it/pagopa-app-forwarder/api/v1/forward"
     USE_MTLS: "true" # mutual auth
