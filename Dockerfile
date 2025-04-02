@@ -12,6 +12,10 @@ RUN apt -y update && \
    apt -y install curl && \
    sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf && \
    sed -i 's/VirtualHost \*:80/VirtualHost \*:8080/' /etc/apache2/sites-available/000-default.conf && \
+   sed -i 's/APACHE_PID_FILE:=\/var\/run\/apache2/APACHE_PID_FILE:=\/tmp\/apache2/' /etc/apache2/envvars && \
+   sed -i 's/APACHE_RUN_DIR:=\/var\/run\/apache2/APACHE_RUN_DIR:=\/tmp\/apache2/' /etc/apache2/envvars && \
+   sed -i 's/APACHE_LOCK_DIR:=\/var\/run\/apache2/APACHE_LOCK_DIR:=\/tmp\/apache2/' /etc/apache2/envvars && \
+   sed -i 's/APACHE_LOG_DIR:=\/var\/run\/apache2/APACHE_LOG_DIR:=\/tmp\/apache2/' /etc/apache2/envvars && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
    mkdir -p download && \
    a2enmod rewrite
