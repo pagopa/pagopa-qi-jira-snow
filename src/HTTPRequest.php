@@ -261,7 +261,7 @@ class HTTPRequest
             $port = 443;
             if (!array_key_exists('port', $parse_url))
             {
-                $port = ($parse_url['scheme'] == 'https') ? 443 : 8080;
+                $port = ($parse_url['scheme'] == 'https') ? 443 : 80;
             }
             $path = array_key_exists('path', $parse_url) ? $parse_url['path'] : '/';
             $qs = (array_key_exists('query', $parse_url)) ? sprintf('?%s', http_build_query($parse_url['query'], "", null, PHP_QUERY_RFC3986)) : '';
