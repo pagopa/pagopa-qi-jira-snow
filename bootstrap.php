@@ -8,6 +8,9 @@
  * Creo un exception handler che mi produca sempre un messaggio di errore in formato JSON
  * ed invii un errore HTTP 500
  */
+
+use pagopa\jirasnow\Config;
+
 set_exception_handler(function (Throwable $exception)
 {
     $response = array(
@@ -87,4 +90,9 @@ foreach($env_var as $var)
         putenv("{$var}={$_SERVER[$var]}");
         $_ENV[$var] = trim($_SERVER[$var],"\x22\x27\ \n\r\t\v\0");
     }
+}
+
+
+if (!is_dir(Config::get('DOWNLOAD_DIR'))) {
+    mkdir(Config::get('DOWNLOAD_DIR'), 0755, true);
 }
