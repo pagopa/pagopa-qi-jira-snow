@@ -67,6 +67,12 @@ class JiraTicket
      */
     protected string $token_x_download_jira;
 
+    /**
+     * Contiene il path dove scaricare gli allegati da inviare a Service Now
+     * @var string
+     */
+    protected string $download_tmp_file;
+
 
     /**
      * Contiene il riferimento alla Issue su Jira
@@ -84,6 +90,7 @@ class JiraTicket
         $this->custom_field_x_last_sent = Config::get("JIRA_ID_FIELD_LAST_SENT");
         $this->ignore_upload_file_by_id = Config::get("JIRA_ACCOUNT_ID_IGNORE_ATTACH");
         $this->token_x_download_jira = Config::get("JIRA_BEARER_TOKEN_FOR_DOWNLOAD");
+        $this->download_tmp_file = Config::get("DOWNLOAD_DIR");
 
         $jira_ticket = new IssueService();
         $this->issueService = $jira_ticket->get($this->getJiraId());
@@ -375,7 +382,7 @@ class JiraTicket
                     sprintf('Authorization: Basic %s', $this->token_x_download_jira)
                 ];
                 $filename = $attachment->filename;
-                $fullpath = sprintf('%s/%s', './download', $filename);
+                $fullpath = sprintf('%s/%s', $this->download_tmp_file, $filename);
 
                 $fp = fopen($fullpath, 'w');
 
@@ -385,7 +392,6 @@ class JiraTicket
                 curl_setopt($c, CURLOPT_HTTPHEADER, $headers);
                 curl_setopt($c, CURLOPT_FILE, $fp);
                 curl_exec($c);
-                //$response = curl_exec($c);
                 curl_close($c);
                 $to_upload[] = [
                     'local_file' => $fullpath,
@@ -397,23 +403,10 @@ class JiraTicket
         $serviceNowAPI = new ServiceNowAPI($this->getServiceNowNumber(), $this->getServiceNowId());
         foreach($to_upload as $key => $file)
         {
-            //echo $file .' - ' .$this->getServiceNowId() .PHP_EOL;
             $file_to_send = $file['local_file'];
             $to_upload[$key]['upload_status'] = $serviceNowAPI->uploadAttach($file_to_send, $this->getServiceNowId());
         }
 
         return $to_upload;
-        /**
-         * prelevo il lastSent
-         * ciclo tutti gli allegati del ticket
-         *   se è un attachment da sincronizzare (ovvero se l'attachment non è caricato da un certo utente ed ha la data di caricamento superiore a LastSent)
-         *   mi prendo l'attachment ed altre info (tipo il size)
-         *   effettuo il download con una HTTPClient banale (sempre senza mutua autenticazione e senza forwarder)
-         *   salvo il file in locale
-         *   preparo la chiamata per fare l'upload
-         *
-         *
-         */
-
     }
 }

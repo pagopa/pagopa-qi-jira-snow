@@ -17,7 +17,6 @@ RUN apt -y update && \
    sed -i 's/APACHE_LOCK_DIR:=\/var\/run\/apache2/APACHE_LOCK_DIR:=\/tmp\/apache2/' /etc/apache2/envvars && \
    sed -i 's/APACHE_LOG_DIR:=\/var\/run\/apache2/APACHE_LOG_DIR:=\/tmp\/apache2/' /etc/apache2/envvars && \
    mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
-   mkdir -p download && \
    a2enmod rewrite
 
 # Change the Apache listening port from 80 to 8080
