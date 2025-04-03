@@ -96,3 +96,4 @@ foreach($env_var as $var)
 if (!is_dir(Config::get('DOWNLOAD_DIR'))) {
     mkdir(Config::get('DOWNLOAD_DIR'), 0755, true);
 }
+
