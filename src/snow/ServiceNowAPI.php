@@ -376,8 +376,8 @@ class ServiceNowAPI
         else
         {
             return [
-                'code' => $code,
-                'details' => $json_response->result->details,
+                'code' => (isset($json_response->errcode)) ? $json_response->errcode : $code,
+                'details' => (isset($json_response->errmsg)) ? $json_response->errmsg : 'Malformed response body',
                 'status' => 'KO'
             ];
         }
