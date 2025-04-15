@@ -122,7 +122,7 @@ microservice-chart: &microservice-chart
     FORWARDER_SUBSCRIPTION_KEY: 'FORWARDER-SUBSCRIPTION-KEY' 
     CERTIFICATE_KEY: 'CERTIFICATE-KEY' 
     CERTIFICATE_PUBLIC: 'CERTIFICATE-PUBLIC' 
-    U_CONTACT: 'U-CONTACT' 
+    U_CONTACT: 'U-CONTACT'
   keyvault:
     name: "pagopa-d-qi-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
