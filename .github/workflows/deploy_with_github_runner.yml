@@ -11,26 +11,30 @@ on:
         required: false
         default: ${{ github.ref_name }}
         type: string
+    secrets:
+      CD_CLIENT_ID:
+        required: true
+      SUBSCRIPTION_ID:
+        required: true
+      TENANT_ID:
+        required: true
 
 env:
   APP_NAME: pagopaqijirasnow
-
-
-permissions:
-  id-token: write
-  contents: read
 
 jobs:
   deploy:
     runs-on: [ self-hosted-job, "${{ inputs.environment }}" ]
     name: Deploy on AKS
     environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Deploy
-        if: ${{ inputs.uninstall  == 'false' ||  inputs.uninstall  == false }}
-        uses: pagopa/github-actions-template/aks-deploy@main
+        uses: pagopa/github-actions-template/aks-deploy@713f5abd8f8ee210e5f6a4243ae52eb7c1b3b5ab # main
         with:
-          branch: ${{ github.ref_name }}
+          branch: ${{ inputs.branch }}
           client_id: ${{ secrets.CD_CLIENT_ID }}
           subscription_id: ${{ secrets.SUBSCRIPTION_ID }}
           tenant_id: ${{ secrets.TENANT_ID }}
@@ -40,3 +44,4 @@ jobs:
           resource_group: ${{ vars.CLUSTER_RESOURCE_GROUP }}
           app_name: ${{ env.APP_NAME }}
           helm_upgrade_options: '--debug --set pagopa-qi-jira-snow.azure.workloadIdentityClientId=${{vars.WORKLOAD_IDENTITY_ID}}'
+          timeout: '5m0s'
